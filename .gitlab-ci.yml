@@ -1,0 +1,48 @@
+stages:
+  - compile
+  - notify
+
+compile-h5:
+  tags:
+    - nodejs
+    - mac
+  stage: compile
+  script:
+    - chmod a+x ./self_build.sh
+    - ./self_build.sh $CI_COMMIT_BRANCH h5
+  when: manual
+compile-official-website:
+  tags:
+    - nodejs
+    - mac
+  stage: compile
+  script:
+    - chmod a+x ./self_build.sh
+    - ./self_build.sh $CI_COMMIT_BRANCH official-website
+  when: manual
+compile-management-system:
+  tags:
+    - nodejs
+    - mac
+  stage: compile
+  script:
+    - chmod a+x ./self_build.sh
+    - ./self_build.sh $CI_COMMIT_BRANCH management-system
+  when: manual
+compile-landing:
+  tags:
+    - nodejs
+    - mac
+  stage: compile
+  script:
+    - chmod a+x ./self_build.sh
+    - ./self_build.sh $CI_COMMIT_BRANCH landing
+  when: manual
+# 构建失败时的通知消息
+notifyFailWeChat:
+  stage: notify
+  script:
+    - curl 'https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=40a14eeb-b302-4738-b681-1128481df591' -H 'Content-Type:application/json' -d "{\"msgtype\":\"markdown\",\"markdown\":{\"content\":\"项目构建结果：<font color=\\"warning\\">失败</font>\n>本次构建由：$GITLAB_USER_NAME 触发\n>项目名称：$CI_PROJECT_NAME\n>提交号：$CI_COMMIT_SHA\n>提交日志：$CI_COMMIT_MESSAGE\n>构建分支：$CI_COMMIT_BRANCH\n>流水线地址：[$CI_PIPELINE_URL]($CI_PIPELINE_URL)\"}}"
+  tags:
+    - nodejs
+  when: on_failure
