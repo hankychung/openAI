@@ -14,7 +14,8 @@
   "dependencies": {
     "@swc/helpers": "~0.4.11",
     "ahooks": "^3.7.5",
-    "antd": "^5.3.0",
+    "antd": "^5.11.2",
+    "axios": "^1.6.2",
     "classnames": "^2.3.2",
     "clipboard": "^2.0.11",
     "d3-drag": "^2.0.0",
