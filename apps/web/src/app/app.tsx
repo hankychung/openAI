@@ -93,6 +93,8 @@ export function App() {
         Object.values(info)
           .filter(Boolean)
           .forEach((v) => {
+            if (v === m) return
+
             if (Array.isArray(v)) {
               local[m].push(...v)
               return

@@ -3,10 +3,9 @@
   "npmScope": "nx-project",
   "tasksRunnerOptions": {
     "default": {
-      "runner": "@nrwl/nx-cloud",
+      "runner": "nx/tasks-runners/default",
       "options": {
-        "cacheableOperations": ["lint", "test", "e2e", "tslint"],
-        "accessToken": "YzM5MmQzYzEtYmI1Zi00OTE2LWFmMTQtOTczMTJiOTdkZGYzfHJlYWQtd3JpdGU="
+        "cacheableOperations": ["lint", "test", "e2e", "tslint", "build"]
       }
     }
   },
