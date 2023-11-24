@@ -1,8 +1,16 @@
 /* Your styles goes here. */
-.lft {
-  width: 50%;
+.app {
+  display: flex;
 
-  .btn {
-    margin-top: 10px;
+  .lft {
+    width: 50%;
+
+    .btn {
+      margin-top: 10px;
+    }
+  }
+
+  .lgt {
+    width: 50%;
   }
 }
