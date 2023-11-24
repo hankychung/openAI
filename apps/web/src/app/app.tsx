@@ -24,6 +24,8 @@ const colors = [
 export function App() {
   const [title, setTitle] = useState('')
 
+  const [meal, setMeal] = useState('')
+
   const [tags, setTags] = useState<string[]>([])
 
   const [tagsCount, setTagsCount] = useState<Record<string, number>>({})
@@ -66,17 +68,19 @@ export function App() {
     initTags()
   }, [initTags])
 
-  const getTags = async () => {
+  const getTags = async (type: 'dish' | 'meal') => {
     const local = await getLocalDish()
 
-    if (local[title]) {
+    const m = type === 'meal' ? meal : title
+
+    if (local[m]) {
       return
     }
 
     setLoading(true)
 
     api
-      .createTags(title)
+      .createTags(m)
       .then(async (res) => {
         const info = JSON.parse(res.answer.replaceAll('\n', ''))
 
@@ -84,13 +88,24 @@ export function App() {
 
         info.isVegetarian = info.isVegetarian ? '素菜' : '荤菜'
 
-        local[title] = Object.values(info).filter(Boolean)
+        local[m] = []
 
-        setTags([...new Set([...tags, ...local[title]])])
+        Object.values(info)
+          .filter(Boolean)
+          .forEach((v) => {
+            if (Array.isArray(v)) {
+              local[m].push(...v)
+              return
+            }
 
-        setCurTags(local[title])
+            local[m].push(v)
+          })
 
-        local[title].forEach((t) => {
+        setTags([...new Set([...tags, ...local[m]])])
+
+        setCurTags(local[m])
+
+        local[m].forEach((t) => {
           if (tagsCount[t]) {
             tagsCount[t] += 1
           } else {
@@ -110,7 +125,7 @@ export function App() {
   return (
     <div>
       <div className={styles.lft}>
-        <Form.Item label="菜品">
+        <Form.Item label="商家录入菜品">
           <Input
             value={title}
             onChange={(e) => {
@@ -134,14 +149,51 @@ export function App() {
           <Button
             className={styles.btn}
             type="primary"
-            onClick={getTags}
+            onClick={() => {
+              getTags('dish')
+            }}
             disabled={loading}
           >
             确认
           </Button>
         </Form.Item>
 
-        <div>我的标签</div>
+        <div>
+          <span>用户选择的标签</span>
+        </div>
+
+        <Form.Item label="用户每日吃过的菜品">
+          <Input
+            value={meal}
+            onChange={(e) => {
+              setCurTags([])
+              setMeal(e.target.value)
+            }}
+            disabled={loading}
+          />
+          <div>
+            {curTags.map((tag, index) => {
+              return (
+                <Tag
+                  color={colors[Math.min(index, colors.length - 1)]}
+                  key={tag}
+                >
+                  {`${tag} (${tagsCount[tag]})`}
+                </Tag>
+              )
+            })}
+          </div>
+          <Button
+            className={styles.btn}
+            type="primary"
+            onClick={() => {
+              getTags('meal')
+            }}
+            disabled={loading}
+          >
+            确认
+          </Button>
+        </Form.Item>
       </div>
 
       <div className={styles.rgt}>

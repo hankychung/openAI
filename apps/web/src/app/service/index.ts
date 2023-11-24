@@ -23,7 +23,7 @@ class Api {
         url: 'https://api.dify.ai/v1/chat-messages',
         method: 'post',
         data: {
-          query: `根据我输入的菜品，${name}，以json文件输出，和flavor，meatIngredient（没有则返回null），vegetableIngredient（没有则返回null），cuisine，isVegetarian的信息`,
+          query: `根据我输入的菜品，${name}，仅以json文件输出，和flavor，meatIngredient（没有则返回null），vegetableIngredient（没有则返回null），cuisine，isVegetarian的信息，仅输出json文件，不要给其他文字信息`,
           inputs: {},
           user: 'HAN',
           conversation_id: '0034df42-8a6c-4ba7-8f28-c6f2f26c8c3b'
