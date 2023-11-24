@@ -7,7 +7,7 @@
     "build": "yarn nx run-many --target=build",
     "prepare": "husky install",
     "lint": "yarn nx format:write --all && nx run-many --target=lint && nx run-many --target=tslint",
-    "deploy": "node scripts/publish-cli/index.js publish",
+    "deploy": "yarn build web && node scripts/deploy.js",
     "proxy": "node scripts/proxy-server/server/index.js"
   },
   "private": true,
