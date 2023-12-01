@@ -67,10 +67,25 @@ const advice = async () => {
 
   console.log('advice', adviceDishes)
 
-  return Object.entries(adviceDishes)
+  const d = Object.entries(adviceDishes)
     .filter(([_, v]) => v > 0)
     .sort((a, b) => b[1] - a[1])
     .map(([k, v]) => `${k} ⋅ ${v}`)
+
+  const top = d.splice(0, 2)
+
+  const eatedMeal = Object.keys(userTags)
+    .filter((k) => k.includes('#'))
+    .map((k) => k.replace('#', ''))
+
+  return [
+    ...top,
+    ...d.filter((k) => {
+      const v = k.split(' ⋅ ')[0]
+
+      return !eatedMeal.includes(v)
+    })
+  ].slice(0, 8)
 }
 
 export {

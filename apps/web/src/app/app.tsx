@@ -121,7 +121,7 @@ export function App() {
     if (type === 'meal') {
       // 更新用户标签
       const curUserTagDict = recordUserTags({
-        tags: local[m],
+        tags: [...local[m], '#' + meal],
         userDict: userTag[defautUser] || {}
       })
 
