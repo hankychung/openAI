@@ -1,4 +1,4 @@
-import { get } from 'idb-keyval'
+import { get, set } from 'idb-keyval'
 
 const defautUser = 'Han'
 
@@ -24,6 +24,32 @@ const getLocalUserTags = async () =>
 const getLocalDish = async () =>
   ((await get('dish')) || {}) as Record<string, string[]>
 
+const setLocalInfo = () => {
+  set('userTag', {
+    Han: {
+      辣味: 1,
+      牛肉: 1,
+      川菜: 2,
+      荤菜: 4,
+      麻辣: 1,
+      鲜味: 1,
+      中式: 1,
+      咸香: 1,
+      腊肉: 1,
+      湖南菜: 1
+    }
+  })
+
+  set('dish', {
+    水煮牛肉: ['辣味', '牛肉', '川菜', '荤菜'],
+    水煮鱼: ['麻辣', '川菜', '荤菜'],
+    尖椒炒香干: ['素菜'],
+    荷芹炒肾片: ['鲜香', '肾片', '荷芹', '中华美食', '荤菜'],
+    姜葱蒸鱼块: ['鲜味', '中式', '荤菜'],
+    香干炒湖南腊肉: ['咸香', '腊肉', '湖南菜', '荤菜']
+  })
+}
+
 const advice = async () => {
   const userTags = (await getLocalUserTags())[defautUser]
 
@@ -47,4 +73,11 @@ const advice = async () => {
     .map(([k, v]) => `${k} ⋅ ${v}`)
 }
 
-export { recordUserTags, getLocalUserTags, getLocalDish, advice, defautUser }
+export {
+  recordUserTags,
+  getLocalUserTags,
+  getLocalDish,
+  advice,
+  defautUser,
+  setLocalInfo
+}

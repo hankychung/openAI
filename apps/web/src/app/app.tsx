@@ -11,7 +11,8 @@ import {
   recordUserTags,
   getLocalDish,
   defautUser,
-  advice
+  advice,
+  setLocalInfo
 } from './utils'
 
 const colors = [
@@ -142,6 +143,8 @@ export function App() {
   return (
     <div className={styles.app}>
       <div className={styles.lft}>
+        <Button onClick={setLocalInfo}>预设菜品与用户标签</Button>
+
         <Form.Item label="商家录入菜品">
           <Input
             value={title}
