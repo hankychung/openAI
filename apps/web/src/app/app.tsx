@@ -1,11 +1,12 @@
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useMemoizedFn } from 'ahooks'
 import { get, set } from 'idb-keyval'
 import styles from './app.module.scss'
 
 import { Button, Form, Input, Tag } from 'antd'
 import { api } from './service'
+import { recordUserTags } from './utils'
 
 const colors = [
   'magenta',
@@ -21,6 +22,10 @@ const colors = [
   'purple'
 ]
 
+const defautUser = 'Han'
+
+type IUserTagDict = Record<string, { [k: string]: number }>
+
 export function App() {
   const [title, setTitle] = useState('')
 
@@ -28,7 +33,13 @@ export function App() {
 
   const [tags, setTags] = useState<string[]>([])
 
-  const [tagsCount, setTagsCount] = useState<Record<string, number>>({})
+  const [userTag, setUserTag] = useState<IUserTagDict>({})
+
+  const recordTags = useMemoizedFn((dict: IUserTagDict) => {
+    setUserTag({ ...dict })
+
+    set('userTag', dict)
+  })
 
   const [curTags, setCurTags] = useState<string[]>([])
 
@@ -43,25 +54,15 @@ export function App() {
   const initTags = useMemoizedFn(async () => {
     const tags: string[] = []
 
-    const tagsCount: Record<string, number> = {}
-
     getLocalDish().then((dict) => {
       Object.values(dict).forEach((arr) => {
-        arr.forEach((t) => {
-          if (tagsCount[t]) {
-            tagsCount[t] += 1
-          } else {
-            tagsCount[t] = 1
-          }
-
-          tags.push(t)
-        })
+        tags.push(...arr)
       })
 
       setTags([...new Set(tags)])
-
-      setTagsCount(tagsCount)
     })
+
+    setUserTag((await get('userTag')) || {})
   })
 
   useEffect(() => {
@@ -74,58 +75,72 @@ export function App() {
     const m = type === 'meal' ? meal : title
 
     if (local[m]) {
-      return
+      // do nothing
+    } else {
+      setLoading(true)
+
+      await api
+        .createTags(m)
+        .then(async (res) => {
+          const info = JSON.parse(res.answer.replaceAll('\n', ''))
+
+          delete info.dish
+
+          info.isVegetarian = info.isVegetarian ? '素菜' : '荤菜'
+
+          local[m] = []
+
+          Object.values(info)
+            .filter(Boolean)
+            .forEach((v) => {
+              // 菜名不进入标签
+              if (v === m) return
+
+              if (Array.isArray(v)) {
+                local[m].push(...v)
+                return
+              }
+
+              console.log('vvv', v)
+
+              local[m].push(...(v as string).split('、'))
+            })
+
+          setTags([...new Set([...tags, ...local[m]])])
+
+          setCurTags(local[m])
+
+          set('dish', local)
+        })
+        .finally(() => {
+          setLoading(false)
+        })
     }
 
-    setLoading(true)
-
-    api
-      .createTags(m)
-      .then(async (res) => {
-        const info = JSON.parse(res.answer.replaceAll('\n', ''))
-
-        delete info.dish
-
-        info.isVegetarian = info.isVegetarian ? '素菜' : '荤菜'
-
-        local[m] = []
-
-        Object.values(info)
-          .filter(Boolean)
-          .forEach((v) => {
-            if (v === m) return
-
-            if (Array.isArray(v)) {
-              local[m].push(...v)
-              return
-            }
-
-            local[m].push(v)
-          })
-
-        setTags([...new Set([...tags, ...local[m]])])
-
-        setCurTags(local[m])
-
-        local[m].forEach((t) => {
-          if (tagsCount[t]) {
-            tagsCount[t] += 1
-          } else {
-            tagsCount[t] = 1
-          }
-        })
-
-        setTagsCount({ ...tagsCount })
-
-        set('dish', local)
+    if (type === 'meal') {
+      // 更新用户标签
+      const curUserTagDict = recordUserTags({
+        tags: local[m],
+        userDict: userTag[defautUser] || {}
       })
-      .finally(() => {
-        setLoading(false)
+
+      recordTags({
+        ...userTag,
+        [defautUser]: curUserTagDict
       })
+    }
   }
 
+  const userTagsArr = useMemo(
+    () =>
+      Object.entries(userTag[defautUser] || {}).map((i) => {
+        return `${i[0]} ⋅ ${i[1]}`
+      }),
+    [userTag]
+  )
+
   return (
-    <div>
+    <div className={styles.app}>
       <div className={styles.lft}>
         <Form.Item label="商家录入菜品">
           <Input
@@ -143,7 +158,7 @@ export function App() {
                   color={colors[Math.min(index, colors.length - 1)]}
                   key={tag}
                 >
-                  {`${tag} (${tagsCount[tag]})`}
+                  {`${tag}`}
                 </Tag>
               )
             })}
@@ -160,11 +175,7 @@ export function App() {
           </Button>
         </Form.Item>
 
-        <div>
-          <span>用户选择的标签</span>
-        </div>
-
-        <Form.Item label="用户每日吃过的菜品">
+        <Form.Item label="用户吃过的菜品">
           <Input
             value={meal}
             onChange={(e) => {
@@ -180,7 +191,7 @@ export function App() {
                   color={colors[Math.min(index, colors.length - 1)]}
                   key={tag}
                 >
-                  {`${tag} (${tagsCount[tag]})`}
+                  {`${tag}`}
                 </Tag>
               )
             })}
@@ -196,15 +207,34 @@ export function App() {
             确认
           </Button>
         </Form.Item>
+
+        <Button>推荐菜品</Button>
+        <div></div>
       </div>
 
       <div className={styles.rgt}>
-        <div>标签库</div>
-        <div>
-          {tags.map((tag, index) => {
+        {/* <div className={styles.block}>
+          <div>标签库</div>
+          <div>
+            {tags.map((tag, index) => {
+              return (
+                <Tag
+                  color={colors[Math.min(index, colors.length - 1)]}
+                  key={tag}
+                >
+                  {`${tag}`}
+                </Tag>
+              )
+            })}
+          </div>
+        </div> */}
+
+        <div className={styles.block}>
+          <span>用户标签： </span>
+          {userTagsArr.map((tag, index) => {
             return (
               <Tag color={colors[Math.min(index, colors.length - 1)]} key={tag}>
-                {`${tag} (${tagsCount[tag]})`}
+                {`${tag}`}
               </Tag>
             )
           })}
