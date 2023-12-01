@@ -134,9 +134,11 @@ export function App() {
 
   const userTagsArr = useMemo(
     () =>
-      Object.entries(userTag[defautUser] || {}).map((i) => {
-        return `${i[0]} ⋅ ${i[1]}`
-      }),
+      Object.entries(userTag[defautUser] || {})
+        .sort((a, b) => b[1] - a[1])
+        .map((i) => {
+          return `${i[0]} ⋅ ${i[1]}`
+        }),
     [userTag]
   )
 
