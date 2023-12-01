@@ -1,12 +1,18 @@
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { useEffect, useMemo, useState } from 'react'
 import { useMemoizedFn } from 'ahooks'
-import { get, set } from 'idb-keyval'
+import { set } from 'idb-keyval'
 import styles from './app.module.scss'
 
 import { Button, Form, Input, Tag } from 'antd'
 import { api } from './service'
-import { recordUserTags } from './utils'
+import {
+  getLocalUserTags,
+  recordUserTags,
+  getLocalDish,
+  defautUser,
+  advice
+} from './utils'
 
 const colors = [
   'magenta',
@@ -22,8 +28,6 @@ const colors = [
   'purple'
 ]
 
-const defautUser = 'Han'
-
 type IUserTagDict = Record<string, { [k: string]: number }>
 
 export function App() {
@@ -35,6 +39,8 @@ export function App() {
 
   const [userTag, setUserTag] = useState<IUserTagDict>({})
 
+  const [adviceDishes, setAdviceDished] = useState<string[]>([])
+
   const recordTags = useMemoizedFn((dict: IUserTagDict) => {
     setUserTag({ ...dict })
 
@@ -44,12 +50,6 @@ export function App() {
   const [curTags, setCurTags] = useState<string[]>([])
 
   const [loading, setLoading] = useState(false)
-
-  const getLocalDish = useMemoizedFn(async () => {
-    const local = ((await get('dish')) || {}) as Record<string, any[]>
-
-    return local
-  })
 
   const initTags = useMemoizedFn(async () => {
     const tags: string[] = []
@@ -62,7 +62,7 @@ export function App() {
       setTags([...new Set(tags)])
     })
 
-    setUserTag((await get('userTag')) || {})
+    setUserTag(await getLocalUserTags())
   })
 
   useEffect(() => {
@@ -208,8 +208,24 @@ export function App() {
           </Button>
         </Form.Item>
 
-        <Button>推荐菜品</Button>
-        <div></div>
+        <Button
+          onClick={() => {
+            advice().then((res) => {
+              setAdviceDished(res)
+            })
+          }}
+        >
+          推荐菜品
+        </Button>
+        <div>
+          {adviceDishes.map((tag, index) => {
+            return (
+              <Tag color={colors[Math.min(index, colors.length - 1)]} key={tag}>
+                {`${tag}`}
+              </Tag>
+            )
+          })}
+        </div>
       </div>
 
       <div className={styles.rgt}>
